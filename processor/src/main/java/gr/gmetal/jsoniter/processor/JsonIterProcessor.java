@@ -12,20 +12,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Messager;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
+import javax.tools.Diagnostic;
 
-@SupportedAnnotationTypes({"com.jsoniter.annotation.JsonObject"})
+@SupportedAnnotationTypes({ "com.jsoniter.annotation.JsonObject" })
 public class JsonIterProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnv) {
 
         final Set<? extends Element> elements = roundEnv.getElementsAnnotatedWith(JsonObject.class);
+        final Messager messager = processingEnv.getMessager();
 
         if (elements == null || elements.size() == 0) {
             return true;
@@ -35,15 +38,15 @@ public class JsonIterProcessor extends AbstractProcessor {
 
         for (Element element : elements) {
             if (element.getKind() != ElementKind.CLASS) {
-                System.out.println("@JsonObject can only be used for classes!");
+                messager.printMessage(Diagnostic.Kind.ERROR,
+                    "@JsonObject can only be used for classes!");
                 return false;
             } else {
-
+                messager.printMessage(Diagnostic.Kind.WARNING,
+                    "Adding class: " + element.getClass().getSimpleName() + " to type literals");
             }
             typeLiteralList.add(TypeLiteral.create(element.getClass()));
         }
-
-
 
         JsonIterator.setMode(DecodingMode.DYNAMIC_MODE_AND_MATCH_FIELD_WITH_HASH);
         JsonStream.setMode(EncodingMode.DYNAMIC_MODE);
@@ -51,7 +54,7 @@ public class JsonIterProcessor extends AbstractProcessor {
 
         config.setup();
 
-         CodegenAccess.staticGenDecoders(config.whatToCodegen(),
+        CodegenAccess.staticGenDecoders(config.whatToCodegen(),
             new CodegenAccess.StaticCodegenTarget("./"));
         com.jsoniter.output.CodegenAccess.staticGenEncoders(config.whatToCodegen(),
             new com.jsoniter.output.CodegenAccess.StaticCodegenTarget("./"));
@@ -102,6 +105,7 @@ public class JsonIterProcessor extends AbstractProcessor {
 
     @Override
     public SourceVersion getSupportedSourceVersion() {
+
         return SourceVersion.latestSupported();
     }
 }
