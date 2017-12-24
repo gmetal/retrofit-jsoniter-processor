@@ -13,10 +13,13 @@ import java.util.List;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 
+@SupportedAnnotationTypes({"com.jsoniter.annotation.JsonObject"})
 public class JsonIterProcessor extends AbstractProcessor {
 
     @Override
@@ -95,5 +98,10 @@ public class JsonIterProcessor extends AbstractProcessor {
 
             return typeLiterals;
         }
+    }
+
+    @Override
+    public SourceVersion getSupportedSourceVersion() {
+        return SourceVersion.latestSupported();
     }
 }
