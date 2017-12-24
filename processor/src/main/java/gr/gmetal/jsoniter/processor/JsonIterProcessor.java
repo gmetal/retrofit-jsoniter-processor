@@ -8,6 +8,8 @@ import com.jsoniter.output.JsonStream;
 import com.jsoniter.spi.DecodingMode;
 import com.jsoniter.spi.TypeLiteral;
 import com.jsoniter.static_codegen.StaticCodegenConfig;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -20,6 +22,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 
 @SupportedAnnotationTypes({ "com.jsoniter.annotation.JsonObject" })
 public class JsonIterProcessor extends AbstractProcessor {
@@ -35,19 +38,28 @@ public class JsonIterProcessor extends AbstractProcessor {
         }
 
         List<TypeLiteral> typeLiteralList = new ArrayList<>();
+        JavaFileObject builderFile;
+        try {
+            builderFile = processingEnv.getFiler().createSourceFile("MyConfig.java");
+            PrintWriter out = new PrintWriter(builderFile.openWriter());
 
-        for (Element element : elements) {
-            if (element.getKind() != ElementKind.CLASS) {
-                messager.printMessage(Diagnostic.Kind.ERROR,
-                    "@JsonObject can only be used for classes!");
-                return false;
-            } else {
-                messager.printMessage(Diagnostic.Kind.WARNING,
-                    "Adding class: " + element.getClass().getSimpleName() + " to type literals");
+            for (Element element : elements) {
+                if (element.getKind() != ElementKind.CLASS) {
+                    messager.printMessage(Diagnostic.Kind.ERROR,
+                        "@JsonObject can only be used for classes!");
+                    return false;
+                } else {
+                    messager.printMessage(Diagnostic.Kind.WARNING, "Adding class: "
+                        + element.getClass().getSimpleName()
+                        + " to type literals");
+                }
+                typeLiteralList.add(TypeLiteral.create(element.getClass()));
+                out.println(element.getClass().getCanonicalName());
             }
-            typeLiteralList.add(TypeLiteral.create(element.getClass()));
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
         JsonIterator.setMode(DecodingMode.DYNAMIC_MODE_AND_MATCH_FIELD_WITH_HASH);
         JsonStream.setMode(EncodingMode.DYNAMIC_MODE);
         DemoCodegenConfig config = new DemoCodegenConfig(typeLiteralList);
